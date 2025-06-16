@@ -83,6 +83,16 @@ class FlysystemSharepointAdapter implements FilesystemAdapter
 
     /**
      * @param string $path
+     * @return string
+     * @throws Exception
+     */
+    public function normalizePath(string $path): string
+    {
+        return ltrim(str_replace('\\', '/', $path), '/');
+    }
+
+    /**
+     * @param string $path
      * @param string $contents
      * @param Config $config
      * @return void
@@ -104,7 +114,21 @@ class FlysystemSharepointAdapter implements FilesystemAdapter
      */
     public function writeStream(string $path, $contents, Config $config): void
     {
-        // TODO: Implement writeStream() method.
+        if (!is_resource($contents)) {
+            throw new \InvalidArgumentException('The contents must be a valid stream resource.');
+        }
+        
+        $stats = fstat($contents);
+        $fileSize = $stats['size'] ?? null;
+
+        $normalizedPath = $this->normalizePath($path);
+        
+        
+        try {
+            $this->connector->uploadStream($this->prefixPath($path), $contents, $fileSize);
+        } catch (\Throwable $e) {
+            throw UnableToWriteFile::atLocation($path, $e->getMessage());
+        }
     }
 
     /**
