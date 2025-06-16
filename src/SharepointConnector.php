@@ -7,6 +7,9 @@ use GWSN\Microsoft\Drive\FileService;
 use GWSN\Microsoft\Drive\FolderService;
 use GWSN\Microsoft\Sharepoint\SharepointService;
 
+use Microsoft\Graph\Model\UploadSession;
+use Microsoft\Graph\Upload\LargeFileUpload;
+
 class SharepointConnector
 {
     private string $accessToken;
@@ -111,5 +114,34 @@ class SharepointConnector
         $this->folder = $folder;
         return $this;
     }
+
+    
+public function uploadStream(string $path, $stream, ?int $fileSize = null): void
+{
+    $path = ltrim($path, '/');
+
+    $uploadSession = $this->graph->createRequest(
+        'POST',
+        "/drives/{$this->driveId}/root:/{$path}:/createUploadSession"
+    )
+    ->attachBody([
+        'item' => [
+        '@microsoft.graph.conflictBehavior' => 'replace',
+        'name' => basename($path),
+        ]
+    ])
+    ->setReturnType(UploadSession::class)
+    ->execute();
+
+    $uploader = new LargeFileUpload(
+        $uploadSession,
+        $this->graph,
+        $stream,
+        $fileSize
+    );
+
+    $uploader->upload();
+}
+
 
 }
