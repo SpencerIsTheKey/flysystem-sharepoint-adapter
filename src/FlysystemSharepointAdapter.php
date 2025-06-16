@@ -7,6 +7,7 @@ use League\Flysystem\FileAttributes;
 use League\Flysystem\FilesystemAdapter;
 use League\Flysystem\StorageAttributes;
 use League\Flysystem\UnableToReadFile;
+use League\Flysystem\UnableToWriteFile;
 use League\Flysystem\UnableToRetrieveMetadata;
 use Throwable;
 
@@ -125,8 +126,8 @@ class FlysystemSharepointAdapter implements FilesystemAdapter
         
         
         try {
-            $this->connector->uploadStream($this->prefixPath($path), $contents, $fileSize);
-        } catch (\Throwable $e) {
+            $this->connector->uploadStream($this->applyPrefix($path), $contents, $fileSize);
+        } catch (Throwable $e) {
             throw UnableToWriteFile::atLocation($path, $e->getMessage());
         }
     }
